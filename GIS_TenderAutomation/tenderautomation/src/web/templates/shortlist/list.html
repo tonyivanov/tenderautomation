@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Shortlist — TenderAutomation{% endblock %}
+{% block content %}
+
+<h5 class="mb-3">📋 Шортлист — взято в работу</h5>
+
+{% if not tenders %}
+<div class="text-center text-muted py-5">
+    <p class="fs-4">📭 Шортлист пуст</p>
+    <p>Нажмите «✅ Взять в работу» в карточке тендера, чтобы добавить его сюда.</p>
+</div>
+{% else %}
+<table class="table table-hover table-sm">
+    <thead class="table-light">
+        <tr>
+            <th>Название</th>
+            <th>Площадка</th>
+            <th>Заказчик</th>
+            <th>НМЦК, руб.</th>
+            <th>⏰ Дедлайн</th>
+            <th>V3</th>
+            <th>Fit</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for t in tenders %}
+        <tr>
+            <td>
+                <a href="/tenders/{{ t.id }}">{{ t.title[:100] }}{% if t.title|length > 100 %}…{% endif %}</a>
+            </td>
+            <td><span class="badge {% if t.platform == 'b2bcenter' %}bg-primary{% else %}bg-info{% endif %}">{{ t.platform }}</span></td>
+            <td class="text-muted small">{{ t.buyer or '—' }}</td>
+            <td class="text-end small">{{ "{:,.0f}".format(t.budget) if t.budget else '—' }}</td>
+            <td class="small {% if t.deadline %}fw-bold{% endif %}">
+                {{ t.deadline.strftime('%d.%m.%Y') if t.deadline else '—' }}
+            </td>
+            <td>
+                {% if t.v3_verdict == 'core' %}
+                <span class="badge bg-success">core</span>
+                {% elif t.v3_verdict == 'review' %}
+                <span class="badge bg-warning text-dark">review</span>
+                {% elif t.v3_verdict == 'reject' %}
+                <span class="badge bg-danger">reject</span>
+                {% else %}
+                <span class="text-muted">—</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if t.v3_fit %}
+                <span class="badge {% if t.v3_fit >= 85 %}bg-success{% elif t.v3_fit >= 50 %}bg-warning text-dark{% else %}bg-danger{% endif %}">{{ t.v3_fit }}</span>
+                {% else %}—{% endif %}
+            </td>
+            <td>
+                <a href="/tenders/{{ t.id }}" class="btn btn-sm btn-outline-primary">🔍</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}

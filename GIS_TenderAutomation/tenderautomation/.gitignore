@@ -1,0 +1,41 @@
+# Local environment
+.env
+.env_prod
+
+# Python virtual environments
+venv/
+.venv/
+env/
+
+# Python caches
+__pycache__/
+.hypothesis/
+.mypy_cache/
+.pytest_cache/
+.coverage
+coverage.xml
+*.py[cod]
+*$py.class
+
+# macOS
+.DS_Store
+
+# Editors
+.idea/
+.vscode/
+
+# Secrets and session files
+cookies.json
+playwright_state.json
+token_cache.json
+**/auth/auth_state.json
+**/auth/cookies_debug.json
+
+# Bidzaar Playwright session (contain JWT tokens)
+data/bidzaar_state.json
+data/bidzaar_token.json
+data/
+# Graphify knowledge graph (machine-specific, rebuild with /graphify)
+graphify-out/
+!graphify-out/GRAPH_REPORT.md
+.env

@@ -1,0 +1,150 @@
+stages:
+  - test
+  - security
+  - build
+  - deploy
+
+default:
+  tags:
+    - docker
+  interruptible: true
+
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+  DOCKER_BUILDKIT: "1"
+  BUILDKIT_PROGRESS: plain
+  IMAGE_REF: "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
+  IMAGE_SHA: "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA"
+  GIT_DEPTH: "0"
+
+test:unit:
+  stage: test
+  image: python:3.12-slim-bookworm
+  before_script:
+    - python -m pip install --no-cache-dir -r requirements-dev.txt
+  script:
+    - python -m pytest --hypothesis-seed=20260717 --cov=src --cov-report=term-missing --cov-report=xml --cov-fail-under=60
+  artifacts:
+    when: always
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+
+test:types:
+  stage: test
+  image: python:3.12-slim-bookworm
+  before_script:
+    - python -m pip install --no-cache-dir -r requirements-dev.txt
+  script:
+    - python -m mypy src --ignore-missing-imports
+
+security:python:
+  stage: security
+  image: python:3.12-slim-bookworm
+  before_script:
+    - python -m pip install --no-cache-dir -r requirements-dev.txt
+  script:
+    - python -m bandit -q -r src
+    - python -m pip_audit -r requirements.txt
+
+security:secrets:
+  stage: security
+  image:
+    name: zricethezav/gitleaks:v8.24.2
+    entrypoint: [""]
+  script:
+    - |
+      set -eu
+      zero_sha="0000000000000000000000000000000000000000"
+      gitleaks_log_opts=""
+
+      if [ -n "${CI_MERGE_REQUEST_DIFF_BASE_SHA:-}" ] && [ "$CI_MERGE_REQUEST_DIFF_BASE_SHA" != "$zero_sha" ]; then
+        base_sha="$CI_MERGE_REQUEST_DIFF_BASE_SHA"
+      elif [ "${CI_COMMIT_BRANCH:-}" = "$CI_DEFAULT_BRANCH" ]; then
+        base_sha="${CI_COMMIT_BEFORE_SHA:-}"
+        if [ -z "$base_sha" ] || [ "$base_sha" = "$zero_sha" ]; then
+          if git rev-parse "$CI_COMMIT_SHA^" >/dev/null 2>&1; then
+            base_sha="$(git rev-parse "$CI_COMMIT_SHA^")"
+          else
+            gitleaks_log_opts="$CI_COMMIT_SHA"
+          fi
+        fi
+      else
+        git fetch --no-tags origin "$CI_DEFAULT_BRANCH"
+        base_sha="$(git merge-base "$CI_COMMIT_SHA" FETCH_HEAD)"
+      fi
+
+      if [ -z "$gitleaks_log_opts" ]; then
+        gitleaks_log_opts="${base_sha}..${CI_COMMIT_SHA}"
+      fi
+
+      echo "Gitleaks commit scope: $gitleaks_log_opts"
+      gitleaks detect --source . --redact --no-banner --log-opts="$gitleaks_log_opts"
+
+build:image:
+  stage: build
+  image: docker:27.5.1
+  services:
+    - name: docker:27.5.1-dind
+      alias: docker
+      command: ["--mtu=1460"]
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+    - if: '$CI_COMMIT_TAG'
+  before_script:
+    - docker version
+    - echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
+  script:
+    - POSTGRES_PASSWORD=ci B2BCENTER_USERNAME=ci B2BCENTER_PASSWORD=ci BIDZAAR_USERNAME=ci BIDZAAR_PASSWORD=ci TENDERAUTOMATION_IMAGE="$IMAGE_SHA" docker compose -f docker-compose.server.yml config --quiet
+    - docker build --pull --build-arg APP_COMMIT_SHA="$CI_COMMIT_SHA" -t "$IMAGE_SHA" -t "$IMAGE_REF" .
+    - scripts/smoke_test.sh "$IMAGE_SHA"
+    - docker push "$IMAGE_SHA"
+    - docker push "$IMAGE_REF"
+    - |
+      if [ "$CI_COMMIT_BRANCH" = "$CI_DEFAULT_BRANCH" ]; then
+        docker tag "$IMAGE_SHA" "$CI_REGISTRY_IMAGE:latest"
+        docker push "$CI_REGISTRY_IMAGE:latest"
+      fi
+  needs:
+    - job: test:unit
+    - job: test:types
+    - job: security:python
+    - job: security:secrets
+  after_script:
+    - docker logout "$CI_REGISTRY" || true
+
+deploy:production:
+  stage: deploy
+  image: docker:27.5.1
+  needs:
+    - job: build:image
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+  variables:
+    DOCKER_HOST: "ssh://deploy@${DEPLOY_IP}"
+  before_script:
+    - apk add --no-cache openssh-client
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - printf '%s\n' "$SSH_KEY" | tr -d '\r' > ~/.ssh/id_ed25519
+    - chmod 600 ~/.ssh/id_ed25519
+    - |
+      cat > ~/.ssh/config <<EOF
+      Host *
+        IdentityFile ~/.ssh/id_ed25519
+        IdentitiesOnly yes
+        StrictHostKeyChecking accept-new
+      EOF
+    - docker version
+    - echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
+  script:
+    - printf '%s\n' "$ENV" > .env
+    - printf '\nTENDERAUTOMATION_IMAGE=%s\n' "$IMAGE_SHA" >> .env
+    - docker compose --env-file .env -f docker-compose.server.yml pull
+    - docker compose --env-file .env -f docker-compose.server.yml up -d --remove-orphans
+  after_script:
+    - rm -f .env ~/.ssh/id_ed25519 ~/.ssh/config
+    - docker logout "$CI_REGISTRY" || true

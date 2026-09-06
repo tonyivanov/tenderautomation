@@ -1,0 +1,1258 @@
+# GIS TenderAutomation — Qualification Rules
+# Format: each rule has id, phrases, score, type, strong_marker, minimum_category, exceptions, forbidden_context, required_context
+
+rules:
+  # =========================================================================
+  # HARD STOP RULES
+  # =========================================================================
+
+  # --- Sites & web development ---
+  - id: website_creation
+    phrases: ["создание сайта", "разработка сайта", "доработка сайта"]
+    score: 0
+    type: hard_stop
+    category: hard_stop
+    exceptions:
+      any: ["инфраструктура сайта", "серверы сайта", "devops", "kubernetes"]
+
+  - id: website_support
+    phrases: ["поддержка сайта", "сопровождение сайта", "развитие сайта", "администрирование сайта", "администрирование сайтов"]
+    score: 0
+    type: hard_stop
+    category: hard_stop
+    exceptions:
+      any: ["инфраструктура сайта", "серверы сайта", "devops", "kubernetes"]
+
+  - id: website_promotion
+    phrases: ["продвижение сайта", "продвижение сайтов", "seo-продвижение", "seo продвижение", "рекламные лендинги", "редизайн сайта"]
+    score: 0
+    type: hard_stop
+    category: hard_stop
+
+  - id: website_general
+    phrases: ["веб-сайт", "интернет-магазин", "лендинг", "веб-портал", "корпоративный портал", "мобильное приложение", "наполнение сайта"]
+    score: 0
+    type: hard_stop
+    category: hard_stop
+    exceptions:
+      any: ["devops", "kubernetes", "инфраструктура", "сервер"]
+
+  # --- Marketing & PR ---
+  - id: pr_marketing
+    phrases: ["pr-продвижение", "pr продвижение", "пиар-поддержка", "рекламные услуги", "рекламная кампания", "медийное сопровождение", "бтл", "btl"]
+    score: 0
+    type: hard_stop
+    category: hard_stop
+
+  - id: social_media
+    phrases: ["ведение социальных сетей", "разработка контента", "smm сопровождение", "программа лояльности", "персональные механики", "email-рассылок"]
+    score: 0
+    type: hard_stop
+    category: hard_stop
+
+  - id: events
+    phrases: ["организация мероприятия", "проведение мероприятия", "церемония открытия", "гала-вечер", "туристическая поездка", "бронирование авиабилетов"]
+    score: 0
+    type: hard_stop
+    category: hard_stop
+
+  # --- 1C ---
+  - id: one_c_stop
+    phrases: ["1с сопровождение", "1с доработка", "разработка 1с", "поддержка 1с", "1с ут", "1с зуп", "1с erp", "базы 1с", "настройка баз 1с", "миграции между системами 1с"]
+    score: 0
+    type: hard_stop
+    category: hard_stop
+    exceptions:
+      any: ["astra linux", "postgresql", "серверная инфраструктура", "субд", "виртуализация", "импортозамещение", "кластер", "миграция инфраструктуры"]
+
+  - id: specialized_apps
+    phrases: ["docsvision", "directum", "arcgis", "1с битрикс", "1с лицензии"]
+    score: 0
+    type: hard_stop
+    category: hard_stop
+
+  # --- Office equipment ---
+  - id: office_equipment
+    phrases: ["офисная техника", "оргтехника", "мфу", "принтеры", "картриджи", "ккт", "контрольно-кассовая техника", "кассовая техника", "печатная инфраструктура", "видеостены", "светодиодные экраны"]
+    score: 0
+    type: hard_stop
+    category: hard_stop
+
+  # --- Construction & building ---
+  - id: construction
+    phrases: ["строительный контроль", "смр", "строительно-монтажные работы", "авторский надзор", "инженерные сети здания", "вентиляция и кондиционирование", "эксплуатация здания", "техническое обслуживание здания", "нежилое помещение", "планирование рабочих мест", "ремонт помещений", "буровзрывные работы", "лифтовое оборудование", "пожарная сигнализация", "административно-хозяйственное обслуживание"]
+    score: 0
+    type: hard_stop
+    category: hard_stop
+
+  - id: non_it_infrastructure
+    phrases: ["дорожная инфраструктура", "железнодорожная инфраструктура", "транспортная инфраструктура"]
+    score: 0
+    type: hard_stop
+    category: hard_stop
+    # These are hard-stops because they are explicitly non-IT
+
+  # --- Engineering (non-IT) infrastructure — HVAC, UPS, plumbing in data centers ---
+  - id: engineering_infrastructure
+    phrases: ["инженерн.{0,30}инфраструктур"]
+    score: 0
+    type: hard_stop
+    category: hard_stop
+    match_type: regex
+    exceptions:
+      any: ["аудит", "обследование", "проектирование it", "модернизация it", "it инфраструктур"]
+
+  # --- Physical security & retail ---
+  - id: retail_security
+    phrases: ["защита товаров в открытой выкладке", "антикражные системы", "противокражные системы", "охранные услуги"]
+    score: 0
+    type: hard_stop
+    category: hard_stop
+
+  # --- Telephony ---
+  - id: telephony
+    phrases: ["виртуальная атс", "iptv", "эфирный комплекс"]
+    score: 0
+    type: hard_stop
+    category: hard_stop
+
+  # --- Misc non-IT ---
+  - id: misc_non_it
+    phrases: ["клининг", "комплексное питание", "психологическая поддержка", "юридическое сопровождение", "экологическое сопровождение", "гостиница", "музыкальное сопровождение", "лабораторное сопровождение", "ремонт автомобилей", "мониторинг транспорта"]
+    score: 0
+    type: hard_stop
+    category: hard_stop
+
+  # =========================================================================
+  # STRONG CORE GIS MARKERS (positive, high weight)
+  # =========================================================================
+
+  # --- DevOps ---
+  - id: devops
+    phrases: ["devops", "devops as a service", "devops-сопровождение", "devops-консалтинг"]
+    score: 30
+    type: positive
+    strong_marker: core
+    minimum_category: core
+
+  - id: devsecops
+    phrases: ["devsecops", "devsecops-аудит"]
+    score: 25
+    type: positive
+    strong_marker: core
+    minimum_category: core
+
+  - id: kubernetes
+    phrases: ["kubernetes", "инфраструктура kubernetes", "среда контейнеризации", "контейнерная платформа"]
+    score: 25
+    type: positive
+    strong_marker: core
+    minimum_category: core
+
+  - id: openshift
+    phrases: ["openshift"]
+    score: 22
+    type: positive
+    strong_marker: core
+    minimum_category: core
+
+  - id: ci_cd
+    phrases: ["ci/cd"]
+    score: 20
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  # --- IT Audits ---
+  - id: audit_it_infrastructure
+    phrases: ["аудит it-инфраструктуры", "аудит ит-инфраструктуры"]
+    score: 25
+    type: positive
+    strong_marker: core
+    minimum_category: core
+    exceptions:
+      any: ["железнодорожная", "дорожная", "транспортная"]
+
+  - id: independent_audit_infra
+    phrases: ["независимый аудит инфраструктуры"]
+    score: 25
+    type: positive
+    strong_marker: core
+    minimum_category: core
+    exceptions:
+      any: ["железнодорожная", "дорожная", "транспортная"]
+
+  - id: survey_it_infrastructure
+    phrases: ["обследование it-инфраструктуры", "обследование ит-инфраструктуры"]
+    score: 22
+    type: positive
+    strong_marker: core
+    minimum_category: core
+
+  - id: audit_current_state
+    phrases: ["аудит текущего состояния"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    required_context: ["it-инфраструктура", "ит-инфраструктура", "инфраструктура"]
+
+  - id: strategy_it_infrastructure
+    phrases: ["стратегия развития it-инфраструктуры", "стратегия развития ит-инфраструктуры"]
+    score: 22
+    type: positive
+    strong_marker: core
+    minimum_category: core
+
+  - id: audit_it_architecture
+    phrases: ["аудит it-архитектуры", "аудит ит-архитектуры"]
+    score: 22
+    type: positive
+    strong_marker: core
+    minimum_category: core
+
+  - id: audit_it_landscape
+    phrases: ["аудит it-ландшафта", "аудит ит-ландшафта"]
+    score: 20
+    type: positive
+    strong_marker: core
+    minimum_category: core
+
+  - id: audit_it_function
+    phrases: ["аудит it-функции", "аудит ит-функции", "аудит it-дирекции", "аудит ит-дирекции"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: it_audit_systems
+    phrases: ["it аудит систем", "ит аудит систем", "it-аудит систем"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  # --- Pentest & Security Analysis ---
+  - id: pentest_infrastructure
+    phrases: ["пентест it-инфраструктуры", "пентест ит-инфраструктуры", "тестирование на проникновение it-инфраструктуры"]
+    score: 23
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: pentest_external
+    phrases: ["пентест внешнего периметра", "внешнее тестирование на проникновение"]
+    score: 22
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: pentest_internal
+    phrases: ["пентест внутреннего периметра", "внутреннее тестирование на проникновение"]
+    score: 22
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: pentest_general
+    phrases: ["тестирование на проникновение", "пентест"]
+    score: 20
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    forbidden_context: ["железнодорож", "дорожн", "строительн", "транспорт"]
+
+  - id: security_analysis
+    phrases: ["анализ защищённости it-инфраструктуры", "анализ защищенности it-инфраструктуры", "анализ защищённости информационной инфраструктуры"]
+    score: 20
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  # --- Managed Infrastructure ---
+  - id: support_it_infrastructure
+    phrases: ["поддержка it-инфраструктуры", "техническая поддержка it-инфраструктуры"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: maintenance_it_infrastructure
+    phrases: ["сопровождение it-инфраструктуры", "сервисное обслуживание it-инфраструктуры"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: outsourcing_sysadmin
+    phrases: ["аутсорсинг системного администрирования"]
+    score: 17
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: deploy_it_infrastructure
+    phrases: ["развёртывание it-инфраструктуры", "развертывание it-инфраструктуры"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: optimize_infrastructure
+    phrases: ["оптимизация инфраструктуры", "экспертная поддержка инфраструктуры"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  # =========================================================================
+  # TECHNOLOGY BONUS RULES (positive, medium weight)
+  # =========================================================================
+
+  # --- Virtualization ---
+  - id: virtualization
+    phrases: ["виртуализация"]
+    score: 18
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: vmware
+    phrases: ["vmware", "vsphere"]
+    score: 18
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: vcenter
+    phrases: ["vcenter"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: hyper_v
+    phrases: ["hyper-v"]
+    score: 16
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: proxmox
+    phrases: ["proxmox"]
+    score: 16
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: vdi
+    phrases: ["vdi", "виртуализация рабочих мест"]
+    score: 8
+    type: positive
+    strong_marker: weak
+    minimum_category: lowish
+
+  - id: citrix_l3
+    phrases: ["citrix l3", "citrix virtual apps", "3-я линия поддержки citrix"]
+    score: 14
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: citrix
+    phrases: ["citrix"]
+    score: 8
+    type: positive
+    strong_marker: weak
+    minimum_category: lowish
+
+  # --- Linux & Servers ---
+  - id: linux_admin
+    phrases: ["администрирование linux", "администрирование linux-серверов"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: linux_support
+    phrases: ["поддержка linux-серверов"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: server_admin
+    phrases: ["администрирование серверов", "администрирование серверных ос", "серверные операционные системы"]
+    score: 12
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: system_administration
+    phrases: ["системное администрирование"]
+    score: 12
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: server_infrastructure
+    phrases: ["серверная инфраструктура"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: server_network_equipment
+    phrases: ["серверное и сетевое оборудование", "серверное оборудование"]
+    score: 10
+    type: positive
+    strong_marker: weak
+    minimum_category: lowish
+
+  # --- Storage ---
+  - id: ceph
+    phrases: ["ceph"]
+    score: 20
+    type: positive
+    strong_marker: core
+    minimum_category: core
+
+  - id: ceph_cluster
+    phrases: ["кластер ceph", "поддержка ceph"]
+    score: 22
+    type: positive
+    strong_marker: core
+    minimum_category: core
+
+  - id: backup_system
+    phrases: ["система резервного копирования", "резервное копирование"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: veritas
+    phrases: ["veritas netbackup"]
+    score: 18
+    type: positive
+    strong_marker: core
+    minimum_category: core
+
+  - id: veeam
+    phrases: ["veeam"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: tape_library
+    phrases: ["ленточная библиотека", "ленточное хранилище"]
+    score: 10
+    type: positive
+    strong_marker: weak
+    minimum_category: lowish
+
+  - id: storage_san
+    phrases: ["схд", "система хранения данных"]
+    score: 8
+    type: positive
+    strong_marker: weak
+    minimum_category: lowish
+
+  - id: netapp
+    phrases: ["netapp"]
+    score: 8
+    type: positive
+    strong_marker: weak
+    minimum_category: lowish
+
+  - id: huawei_storage
+    phrases: ["huawei oceanstor"]
+    score: 8
+    type: positive
+    strong_marker: weak
+    minimum_category: lowish
+
+  - id: hpe_msa
+    phrases: ["hpe msa"]
+    score: 8
+    type: positive
+    strong_marker: weak
+    minimum_category: lowish
+
+  # --- Network ---
+  - id: network_infrastructure
+    phrases: ["сетевая инфраструктура", "сетевой инфраструктуры"]
+    score: 12
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: network_architecture
+    phrases: ["архитектура сети"]
+    score: 10
+    type: positive
+    strong_marker: weak
+    minimum_category: lowish
+
+  - id: network_expertise
+    phrases: ["экспертиза архитектуры сети"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  # --- Databases ---
+  - id: db_admin
+    phrases: ["администрирование баз данных", "серверы баз данных"]
+    score: 10
+    type: positive
+    strong_marker: weak
+    minimum_category: lowish
+
+  - id: ms_sql
+    phrases: ["ms sql server"]
+    score: 10
+    type: positive
+    strong_marker: weak
+    minimum_category: lowish
+
+  - id: postgresql
+    phrases: ["postgresql"]
+    score: 10
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: oracle_migration
+    phrases: ["oracle db migration", "миграция oracle"]
+    score: 12
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: kafka
+    phrases: ["kafka support", "поддержка kafka", "kafka"]
+    score: 8
+    type: positive
+    strong_marker: weak
+    minimum_category: lowish
+
+  # --- Middleware & Cloud ---
+  - id: container_env
+    phrases: ["контейнерная среда", "среда контейнеризации", "контейнерная платформа"]
+    score: 18
+    type: positive
+    strong_marker: core
+    minimum_category: core
+
+  - id: container_security
+    phrases: ["защита контейнерной среды", "защита среды контейнеризации"]
+    score: 14
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: docker
+    phrases: ["docker"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: iaas
+    phrases: ["iaas"]
+    score: 8
+    type: positive
+    strong_marker: weak
+    minimum_category: lowish
+
+  - id: cloud_infrastructure
+    phrases: ["облачная инфраструктура"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  # =========================================================================
+  # SERVICE BONUS RULES (context-dependent)
+  # =========================================================================
+
+  - id: infra_support
+    phrases: ["поддержка серверного оборудования", "поддержка сетевого оборудования", "сопровождение инфраструктурного по", "инфраструктурное по"]
+    score: 10
+    type: positive
+    strong_marker: weak
+    minimum_category: lowish
+
+  - id: migration_infrastructure
+    phrases: ["миграция инфраструктуры", "миграция серверов", "миграция виртуальных машин", "миграция vmware", "миграция в облако", "миграция цод"]
+    score: 18
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: migration_db
+    phrases: ["миграция базы данных", "миграция exchange", "миграция с ibm power на intel"]
+    score: 12
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: import_substitution
+    phrases: ["импортозамещение"]
+    score: 18
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: modernization_infra
+    phrases: ["модернизация it-инфраструктуры", "модернизация ит-инфраструктуры"]
+    score: 12
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: design_infra
+    phrases: ["проектирование it-инфраструктуры"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: high_availability
+    phrases: ["отказоустойчивость", "катастрофоустойчивость"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  # --- Audit bonuses ---
+  - id: audit_security
+    phrases: ["аудит информационной безопасности", "комплексный аудит информационной безопасности", "аудит конфигураций и средств защиты"]
+    score: 18
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: audit_secure_sdlc
+    phrases: ["аудит secure sdlc", "аудит процессов разработки", "аудит ci/cd", "devsecops-аудит"]
+    score: 18
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: audit_backup
+    phrases: ["аудит резервного копирования", "аудит отказоустойчивости"]
+    score: 18
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: it_maturity
+    phrases: ["повышение зрелости it-функции"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  # --- Monitoring ---
+  - id: zabbix
+    phrases: ["zabbix"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: prometheus
+    phrases: ["prometheus"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: grafana
+    phrases: ["grafana"]
+    score: 10
+    type: positive
+    strong_marker: weak
+    minimum_category: lowish
+
+  - id: monitoring_it
+    phrases: ["мониторинг it-инфраструктуры"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  # --- Databases ---
+  - id: postgres_pro
+    phrases: ["postgres pro"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: clickhouse
+    phrases: ["clickhouse"]
+    score: 12
+    type: positive
+    strong_marker: weak
+    minimum_category: lowish
+
+  - id: greenplum
+    phrases: ["greenplum"]
+    score: 12
+    type: positive
+    strong_marker: weak
+    minimum_category: lowish
+
+  # --- Security compliance ---
+  - id: cybersecurity
+    phrases: ["информационная безопасность", "кибербезопасност", "киберучения"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: ngfw
+    phrases: ["ngfw", "межсетевой экран", "waf", "ddos"]
+    score: 10
+    type: positive
+    strong_marker: weak
+    minimum_category: lowish
+
+  # --- OS & Platform ---
+  - id: astra_linux
+    phrases: ["astra linux"]
+    score: 12
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  - id: active_directory
+    phrases: ["active directory"]
+    score: 12
+    type: positive
+    strong_marker: review
+    minimum_category: review
+
+  # =========================================================================
+  # NEGATIVE WEIGHT RULES (reduce score, don't hard-block)
+  # =========================================================================
+
+  - id: pure_supply
+    phrases: ["поставка программного обеспечения", "предоставление права использования"]
+    score: -15
+    type: negative
+    exceptions:
+      any: ["внедрение", "миграция", "настройка", "сопровождение", "техническая поддержка", "проектирование", "обследование", "модернизация"]
+
+  - id: license_renewal
+    phrases: ["продление лицензий"]
+    score: -10
+    type: negative
+    exceptions:
+      any: ["внедрение", "миграция", "настройка", "сопровождение", "техническая поддержка", "проектирование", "модернизация"]
+
+  - id: pure_equipment_supply
+    phrases: ["чистая поставка оборудования", "поставка серверов", "поставка схд", "аренда серверов"]
+    score: -5
+    type: negative
+    exceptions:
+      any: ["внедрение", "настройка", "миграция", "сопровождение", "техническая поддержка", "модернизация"]
+
+  # --- Container context ---
+  - id: container_terminal
+    phrases: ["контейнерный терминал", "контейнерно-бункерный парк", "перевозка контейнеров", "контейнерная площадка", "морской контейнер", "строительный контроль на контейнерном терминале"]
+    score: -40
+    type: hard_stop
+    category: hard_stop
+
+  # --- Non-IT audits ---
+  - id: non_it_audit
+    phrases: ["аудит буровзрывных работ", "строительный аудит", "финансовый аудит", "экологический аудит", "пожарно-технический аудит", "аудит производства", "аудит условий труда"]
+    score: -40
+    type: hard_stop
+    category: hard_stop
+
+  - id: audit_site_seo
+    phrases: ["аудит сайта"]
+    score: -35
+    type: hard_stop
+    category: hard_stop
+
+  # --- Wrong migration contexts ---
+  - id: wrong_migration
+    phrases: ["миграции между системами 1с", "миграция данных между базами 1с", "миграция сайта", "миграция контента"]
+    score: -25
+    type: hard_stop
+    category: hard_stop
+
+  # =========================================================================
+  # REGEX RULES — catch phrases with intermediate words
+  # =========================================================================
+
+  # --- Pentest & Security Analysis (regex) ---
+  - id: pentest_regex
+    phrases: ["тестировани.{0,30}на проникновен"]
+    score: 22
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  - id: security_analysis_regex
+    phrases: ["анализ.{0,20}защищенн.{0,100}(it|информационн).{0,20}инфраструктур"]
+    score: 20
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+    group: penetration_testing
+
+  - id: security_analysis_regex2
+    phrases: ["(rf|запрос).{0,60}анализ.{0,20}защищенн.{0,60}(it|информационн).{0,20}инфраструктур"]
+    score: 20
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+    group: penetration_testing
+
+  # --- IB (Information Security) markers ---
+  - id: ib_state_analysis
+    phrases: ["анализ.{0,30}состоян.{0,30}информационн.{0,20}безопасност"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  - id: ib_event_monitoring
+    phrases: ["мониторинг.{0,30}событ.{0,20}информационн.{0,20}безопасност"]
+    score: 12
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  - id: ib_pam_support
+    phrases: ["поддержк.{0,30}pam", "сопровожден.{0,30}pam", "администрирован.{0,30}pam"]
+    score: 12
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  - id: ib_szi_setup
+    phrases: ["настройк.{0,30}средств.{0,20}защит.{0,20}информац"]
+    score: 12
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  - id: ib_strategy
+    phrases: ["стратег.{0,30}информационн.{0,20}безопасност"]
+    score: 10
+    type: positive
+    strong_marker: weak
+    minimum_category: lowish
+    match_type: regex
+
+  - id: ib_web_traffic_filter
+    phrases: ["фильтрац.{0,30}входящ.{0,20}веб.{0,10}трафик"]
+    score: 10
+    type: positive
+    strong_marker: weak
+    minimum_category: lowish
+    match_type: regex
+
+  # --- IT Audit (regex) ---
+  - id: audit_it_regex
+    phrases: ["аудит.{0,100}(it|ит|информационн).{0,20}инфраструктур"]
+    score: 25
+    type: positive
+    strong_marker: core
+    minimum_category: core
+    match_type: regex
+
+  - id: audit_state_strategy_regex
+    phrases: ["аудит.{0,30}текущ.{0,30}(состоян|стратег).{0,80}(it|информационн).{0,20}инфраструктур"]
+    score: 25
+    type: positive
+    strong_marker: core
+    minimum_category: core
+    match_type: regex
+
+  - id: audit_it_subtype_regex
+    phrases: ["аудит.{0,30}(it|ит).{0,20}(архитектур|ландшафт|дирекц|функц|структур|ландшафт)"]
+    score: 20
+    type: positive
+    strong_marker: core
+    minimum_category: core
+    match_type: regex
+
+  - id: survey_it_regex
+    phrases: ["обследован.{0,80}(it|информационн).{0,20}инфраструктур"]
+    score: 22
+    type: positive
+    strong_marker: core
+    minimum_category: core
+    match_type: regex
+
+  # --- Managed Infrastructure (regex) ---
+  - id: support_it_regex
+    phrases: ["(поддержк|сопровожден|обслуживан).{0,60}(it|ит).{0,20}инфраструктур"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  - id: sysadmin_outsource_regex
+    phrases: ["(аутсорсинг|системн.{0,10}администрирован).{0,60}(it|ит).{0,20}инфраструктур"]
+    score: 17
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  # --- IT Outsourcing ---
+  - id: it_outsource_regex
+    phrases: ["аутсорсинг.{0,30}it", "аутсорсинг.{0,30}ит"]
+    score: 12
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  # --- IT Contour / Landscape survey ---
+  - id: it_contour_survey_regex
+    phrases: ["обследован.{0,50}(единого|единой|it|ит).{0,20}(контур|ландшафт)"]
+    score: 16
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  - id: admin_linux_regex
+    phrases: ["администрирован.{0,30}(linux|сервер.{0,10}ос|операционн.{0,10}систем)"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  - id: support_linux_regex
+    phrases: ["поддержк.{0,30}(linux|сервер)"]
+    score: 12
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  - id: support_ceph_regex
+    phrases: ["поддержк.{0,30}ceph"]
+    score: 20
+    type: positive
+    strong_marker: core
+    minimum_category: core
+    match_type: regex
+
+  # --- L3 Virtualization support ---
+  - id: l3_virtualization_regex
+    phrases: ["(3.{0,10}лин|треть.{0,15}лин).{0,80}виртуализац"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  - id: support_virtualization_env_regex
+    phrases: ["поддержк.{0,80}сред.{0,20}виртуализац"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  # --- Modernization & Design ---
+  - id: modernization_regex
+    phrases: ["модернизац.{0,30}(it|ит).{0,20}инфраструктур"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  # --- Modernization in non-residential buildings (hard-stop) ---
+  - id: modernization_non_residential
+    phrases: ["модернизац.{0,40}(it|ит).{0,20}инфраструктур.{0,100}(нежил|здани|помещен|арендуем|рабоч.{0,10}мест)"]
+    score: 0
+    type: hard_stop
+    category: hard_stop
+    match_type: regex
+
+  - id: design_infra_regex
+    phrases: ["проектирован.{0,50}(it|ит).{0,20}инфраструктур"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  # --- MS SQL, Exchange, Tape libraries ---
+  - id: db_server_regex
+    phrases: ["(сопровожден|обслуживан|поддержк|администрирован).{0,60}сервер.{0,20}баз.{0,20}данн"]
+    score: 12
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  - id: exchange_migration_regex
+    phrases: ["миграц.{0,50}exchange"]
+    score: 14
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  - id: tape_support_regex
+    phrases: ["поддержк.{0,40}ленточн.{0,20}библиотек"]
+    score: 10
+    type: positive
+    strong_marker: weak
+    minimum_category: lowish
+    match_type: regex
+
+  # --- Infrastructure software support ---
+  - id: infra_software_support_regex
+    phrases: ["сопровожден.{0,40}инфраструктурн.{0,20}по"]
+    score: 14
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  # --- Works in IT-infrastructure direction ---
+  - id: infra_work_direction_regex
+    phrases: ["работ.{0,60}по направлен.{0,30}(it|ит).{0,20}инфраструктур"]
+    score: 14
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  # --- Backup modernization + tape storage ---
+  - id: backup_modernization_regex
+    phrases: ["модернизац.{0,50}резервн.{0,20}копирован.{0,50}ленточн"]
+    score: 14
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  # --- Network analysis & modernization ---
+  - id: network_analysis_regex
+    phrases: ["(анализ|модернизац).{0,50}сетев.{0,20}инфраструктур"]
+    score: 14
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  # --- Backup system modernization ---
+  - id: backup_system_modernization_regex
+    phrases: ["модернизац.{0,60}систем.{0,20}резервн.{0,20}копирован"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  # --- Hardware/software complex + IT-infrastructure ---
+  - id: hw_complex_it_infra_regex
+    phrases: ["программно.{0,10}аппаратн.{0,20}комплекс.{0,50}(it|ит).{0,20}инфраструктур"]
+    score: 14
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  # --- PCI DSS audit ---
+  - id: pci_dss_audit_regex
+    phrases: ["аудит.{0,20}pci.{0,20}dss"]
+    score: 14
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  # --- Backup system protection ---
+  - id: backup_protection_regex
+    phrases: ["защит.{0,30}систем.{0,20}резервн.{0,20}копирован"]
+    score: 10
+    type: positive
+    strong_marker: weak
+    minimum_category: lowish
+    match_type: regex
+
+  # --- Wi-Fi audit ---
+  - id: wifi_audit_regex
+    phrases: ["аудит.{0,20}wi.{0,5}fi"]
+    score: 10
+    type: positive
+    strong_marker: weak
+    minimum_category: lowish
+    match_type: regex
+
+  # --- Server + Network setup + support ---
+  - id: server_network_setup_regex
+    phrases: ["настройк.{0,40}серверн.{0,40}сетев.{0,60}техническ.{0,20}поддержк"]
+    score: 14
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  # --- Cyber exercises ---
+  - id: cyber_exercise_regex
+    phrases: ["киберучен.{0,80}(компрометац|инфраструктур|атак)"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  # --- Security audit + products ---
+  - id: security_audit_products_regex
+    phrases: ["аудит.{0,50}(программн.{0,20}продукт|процесс.{0,20}разработк).{0,50}(иб|информационн.{0,20}безопасност)"]
+    score: 15
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  # --- Extended hard-stop for sites (regex) ---
+  - id: website_hard_stop_regex
+    phrases: ["(доработк|разработк|поддержк|сопровожден|администрирован|развит|создан).{0,50}(веб.{0,5}сайт|интернет.{0,5}сайт|сайт)"]
+    score: 0
+    type: hard_stop
+    category: hard_stop
+    match_type: regex
+    exceptions:
+      any: ["серверы сайта", "инфраструктура сайта", "devops", "kubernetes", "хостинговая инфраструктура"]
+
+  - id: website_hard_stop_regex2
+    phrases: ["(веб.{0,5}сайт|интернет.{0,5}сайт|сайт).{0,50}(доработк|разработк|поддержк|сопровожден|администрирован|развит)"]
+    score: 0
+    type: hard_stop
+    category: hard_stop
+    match_type: regex
+    exceptions:
+      any: ["серверы сайта", "инфраструктура сайта", "devops", "kubernetes", "хостинговая инфраструктура"]
+
+  # --- Extended hard-stop for sites ---
+  - id: website_support_extended
+    phrases: ["поддержка сайтов", "техническая поддержка сайтов", "доработка сайтов", "сопровождение сайтов", "развитие интернет сайта", "разработка и поддержка сайта", "веб разработка", "создание и сопровождение сайтов", "seo поддержка сайта", "поддержка и развитие сайта", "поддержка и доработка сайта", "создание и техническое сопровождение сайтов"]
+    score: 0
+    type: hard_stop
+    category: hard_stop
+
+  - id: website_corporate
+    phrases: ["поддержка корпоративного сайта", "развитие и сопровождение интернет сайта", "сопровождение и доработка сайта", "техническая поддержка сайта"]
+    score: 0
+    type: hard_stop
+    category: hard_stop
+
+  # --- PAK support (without IT-infra context) ---
+  - id: pak_support_regex
+    phrases: ["техническ.{0,30}поддержк.{0,40}программно.{0,10}аппаратн.{0,20}комплекс"]
+    score: 12
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  # --- IT-equipment maintenance ---
+  - id: it_equipment_maintenance_regex
+    phrases: ["системн.{0,10}техническ.{0,10}обслуживан.{0,40}(it|ит).{0,10}оборудован"]
+    score: 12
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  # --- Asterisk in virtual environment ---
+  - id: asterisk_virtual_regex
+    phrases: ["asterisk.{0,80}виртуальн.{0,20}сред"]
+    score: 12
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  # --- OneIdentity support ---
+  - id: oneidentity_regex
+    phrases: ["oneidentity"]
+    score: 12
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  # --- SAN management + support ---
+  - id: san_management_regex
+    phrases: ["san.{0,20}(management|управлен).{0,40}техническ.{0,20}поддержк"]
+    score: 12
+    type: positive
+    strong_marker: review
+    minimum_category: review
+    match_type: regex
+
+  # --- Network support services ---
+  - id: network_support_services_regex
+    phrases: ["услуг.{0,50}сетев.{0,10}поддержк"]
+    score: 10
+    type: positive
+    strong_marker: weak
+    minimum_category: lowish
+    match_type: regex
+
+  # =========================================================================
+  # BROAD CONTEXT RULES (low/zero weight, used only for context validation)
+  # =========================================================================
+
+  - id: generic_infrastructure
+    phrases: ["инфраструктур"]
+    score: 2
+    type: positive
+    strong_marker: none
+    minimum_category: low
+    forbidden_context: ["железнодорожная", "дорожная", "транспортная", "строительн"]
+
+  - id: generic_support
+    phrases: ["техническая поддержка"]
+    score: 3
+    type: positive
+    strong_marker: none
+    minimum_category: low
+    forbidden_context: ["сайта", "интернет-аптек", "ккт", "принтер", "мфу", "рабочих мест"]
+
+  - id: generic_admin
+    phrases: ["администрирован"]
+    score: 5
+    type: positive
+    strong_marker: none
+    minimum_category: low
+
+  - id: generic_monitoring
+    phrases: ["мониторинг"]
+    score: 1
+    type: positive
+    strong_marker: none
+    minimum_category: low
+    forbidden_context: ["транспорта", "рынка", "цен", "сми", "сайтов", "транспортных средств"]

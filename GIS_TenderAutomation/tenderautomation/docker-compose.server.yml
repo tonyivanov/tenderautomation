@@ -1,0 +1,128 @@
+# TenderAutomation — production stack
+# Start: docker compose -f docker-compose.server.yml up -d
+# Stop:  docker compose -f docker-compose.server.yml down
+# Logs:  docker compose -f docker-compose.server.yml logs -f app
+
+services:
+  # ── PostgreSQL 16 ──────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-tender_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-tender_db}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tender_user} -d ${POSTGRES_DB:-tender_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── TenderAutomation Web App ───────────────────────────────────────────
+  migrate:
+    image: ${TENDERAUTOMATION_IMAGE:?TENDERAUTOMATION_IMAGE is required}
+    pull_policy: always
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-tender_user}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-tender_db}?sslmode=disable
+      B2BCENTER_USERNAME: ${B2BCENTER_USERNAME:?B2BCENTER_USERNAME is required}
+      B2BCENTER_PASSWORD: ${B2BCENTER_PASSWORD:?B2BCENTER_PASSWORD is required}
+
+    command: ["alembic", "upgrade", "head"]
+
+  app:
+    image: ${TENDERAUTOMATION_IMAGE:?TENDERAUTOMATION_IMAGE is required}
+    pull_policy: always
+    container_name: tenderautomation_app
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-tender_user}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-tender_db}?sslmode=disable
+      B2BCENTER_USERNAME: ${B2BCENTER_USERNAME:?B2BCENTER_USERNAME is required}
+      B2BCENTER_PASSWORD: ${B2BCENTER_PASSWORD:?B2BCENTER_PASSWORD is required}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_IDS: ${TELEGRAM_CHAT_IDS:-}
+      WEB_BASE_URL: ${WEB_BASE_URL:-http://localhost:8000}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      EMAIL_RECIPIENTS: ${EMAIL_RECIPIENTS:-}
+      DIGEST_HOURS: ${DIGEST_HOURS:-24}
+      QUALIFICATION_THRESHOLD: ${QUALIFICATION_THRESHOLD:-50}
+      COLLECTION_MAX_RETRIES: ${COLLECTION_MAX_RETRIES:-3}
+      COLLECTION_RETRY_BASE_SEC: ${COLLECTION_RETRY_BASE_SEC:-1.0}
+      DATA_DIR: /app/data
+      FILTERS_DIR: /app/filters
+      PLAYWRIGHT_BROWSERS_PATH: /root/.cache/ms-playwright
+    volumes:
+      - app_data:/app/data
+    command: ["uvicorn", "web.app:app", "--host", "0.0.0.0", "--port", "8000"]
+
+  # ── Pipeline Cron (runs collection + qualification periodically) ───────
+  pipeline-cron:
+    image: ${TENDERAUTOMATION_IMAGE:?TENDERAUTOMATION_IMAGE is required}
+    pull_policy: always
+    container_name: tenderautomation_cron
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-tender_user}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-tender_db}?sslmode=disable
+      B2BCENTER_USERNAME: ${B2BCENTER_USERNAME:?B2BCENTER_USERNAME is required}
+      B2BCENTER_PASSWORD: ${B2BCENTER_PASSWORD:?B2BCENTER_PASSWORD is required}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_IDS: ${TELEGRAM_CHAT_IDS:-}
+      WEB_BASE_URL: ${WEB_BASE_URL:-http://localhost:8000}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      EMAIL_RECIPIENTS: ${EMAIL_RECIPIENTS:-}
+      DIGEST_HOURS: ${DIGEST_HOURS:-24}
+      QUALIFICATION_THRESHOLD: ${QUALIFICATION_THRESHOLD:-50}
+      COLLECTION_MAX_RETRIES: ${COLLECTION_MAX_RETRIES:-3}
+      COLLECTION_RETRY_BASE_SEC: ${COLLECTION_RETRY_BASE_SEC:-1.0}
+      DATA_DIR: /app/data
+      FILTERS_DIR: /app/filters
+      PLAYWRIGHT_BROWSERS_PATH: /root/.cache/ms-playwright
+      PIPELINE_CRON_SCHEDULE: ${PIPELINE_CRON_SCHEDULE:-0 */6 * * *}
+      PIPELINE_INTERVAL_SECONDS: ${PIPELINE_INTERVAL_SECONDS:-21600}
+    volumes:
+      - app_data:/app/data
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -eu
+        echo "Pipeline scheduler starting"
+        while true; do
+          cd /app
+          python -m core.cli run-pipeline
+          sleep "$${PIPELINE_INTERVAL_SECONDS:-21600}"
+        done
+
+volumes:
+  pgdata:
+  app_data:

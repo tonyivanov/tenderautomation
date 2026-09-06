@@ -1,0 +1,26 @@
+platform_id: b2bcenter
+display_name: "B2B-Center"
+base_url: "https://www.b2b-center.ru"
+auth_method: none
+auth_method_recon: playwright
+rate_limit_sec: 2.5
+field_mappings:
+  title: title
+  buyer: buyer
+  budget: budget_raw
+  deadline: deadline_raw
+  url: url
+extra:
+  fetch_modes:
+    - endpoint
+    - playwright
+  endpoint_url: "https://www.b2b-center.ru/market/"
+  endpoint_max_pages: 5
+  rate_limit_sec_min: 1.5
+  rate_limit_sec_max: 4.0
+  long_pause_prob: 0.15
+  long_pause_sec_min: 8.0
+  long_pause_sec_max: 15.0
+  max_results_per_query: 1000
+  page_size: 20
+  incremental_stop_after: 5

@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}{{ tender.title[:60] }} — TenderAutomation{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-lg-8">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+      <h5 class="mb-0" data-testid="tender-title">{{ tender.title }}</h5>
+      <div class="d-flex">
+        <a href="/export/zip?ids={{ tender.id }}" class="btn btn-success btn-sm me-2"
+           data-testid="tender-export-single-btn">⬇ Скачать для AI</a>
+        <form method="post" action="/tenders/{{ tender.id }}/deep-analysis" class="me-2">
+          <button type="submit" class="btn btn-outline-warning btn-sm"
+                  title="Собрать описание с площадки и проанализировать через DeepSeek V4">
+            🧠 Глубокий анализ
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <dl class="row small mb-4">
+      <dt class="col-sm-3">Площадка</dt>
+      <dd class="col-sm-9"><span class="badge bg-secondary">{{ tender.platform }}</span></dd>
+      <dt class="col-sm-3">Заказчик</dt>
+      <dd class="col-sm-9" data-testid="tender-buyer">{{ tender.buyer or '—' }}</dd>
+      <dt class="col-sm-3">НМЦК</dt>
+      <dd class="col-sm-9" data-testid="tender-budget">
+        {{ "{:,.2f}".format(tender.budget) ~ " руб." if tender.budget else '—' }}
+      </dd>
+      <dt class="col-sm-3">Дедлайн</dt>
+      <dd class="col-sm-9 fw-bold {% if tender.deadline %}text-danger{% endif %}" data-testid="tender-deadline">
+        {{ tender.deadline.strftime('%d.%m.%Y %H:%M') if tender.deadline else '—' }}
+      </dd>
+      <dt class="col-sm-3">Ссылка</dt>
+      <dd class="col-sm-9"><a href="{{ tender.url }}" target="_blank">Открыть на площадке ↗</a></dd>
+      <dt class="col-sm-3">Статус</dt>
+      <dd class="col-sm-9">
+        {% set status_badges = {
+           'filtered': ('bg-secondary', 'Фильтрован'),
+           'in_review': ('bg-info', 'На проверке'),
+           'qualified': ('bg-success', 'Квалифицирован'),
+           'taken': ('bg-primary', 'Взято в работу'),
+           'deferred': ('bg-warning text-dark', 'Отложено'),
+           'rejected': ('bg-danger', 'Отклонено'),
+        } %}
+        {% set b = status_badges.get(tender.status, ('bg-secondary', tender.status)) %}
+        <span class="badge {{ b[0] }}">{{ b[1] }}</span>
+      </dd>
+      {% if v3_info.verdict %}
+      <dt class="col-sm-3">V3 Классификация</dt>
+      <dd class="col-sm-9">
+        <span class="badge {% if v3_info.verdict == 'core' %}bg-success{% elif v3_info.verdict == 'review' %}bg-warning text-dark{% else %}bg-danger{% endif %}">{{ v3_info.verdict }}</span>
+        <span class="badge bg-secondary ms-1">fit={{ v3_info.fit_score }}</span>
+        <span class="badge bg-light text-dark ms-1">conf={{ v3_info.confidence }}</span>
+        {% if v3_info.queue %}
+        <span class="badge ms-1 {% if v3_info.queue == 'P1' %}bg-danger{% elif v3_info.queue == 'P2' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">{{ v3_info.queue }}</span>
+        {% endif %}
+      </dd>
+      {% endif %}
+      {% if tender.description %}
+      <dt class="col-sm-3">Описание</dt>
+      <dd class="col-sm-9">{{ tender.description[:300] }}</dd>
+      {% endif %}
+    </dl>
+
+    {% if ai_analysis %}
+    <div class="card mb-3 border-primary" data-testid="ai-analysis-section">
+      <div class="card-header bg-primary bg-opacity-10 d-flex justify-content-between align-items-center">
+        <strong>{{ ai_analysis.ai_tier }} AI-анализ</strong>
+        <small class="text-muted">{{ ai_analysis.ai_tool or 'AI' }} · {{ ai_analysis.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
+      </div>
+      <div class="card-body ai-analysis-body">
+        {{ ai_analysis.ai_rationale | format_analysis | safe }}
+      </div>
+      <div class="card-footer bg-transparent text-muted small">
+        <form method="post" action="/tenders/{{ tender.id }}/analysis" class="row g-2">
+          <div class="col-auto">
+            <select name="ai_tier" class="form-select form-select-sm" data-testid="ai-tier-select">
+              <option value="">Загрузить новый анализ</option>
+              {% for tier in ai_tier_options %}
+              <option value="{{ tier }}">{{ tier }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col">
+            <textarea name="ai_rationale" class="form-control form-control-sm" rows="1"
+                      placeholder="Обоснование" maxlength="2000"></textarea>
+          </div>
+          <div class="col-auto">
+            <input type="text" name="ai_tool" class="form-control form-control-sm"
+                   placeholder="AI-инструмент" maxlength="100" style="width:120px">
+          </div>
+          <div class="col-auto">
+            <button type="submit" class="btn btn-primary btn-sm">Сохранить</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    {% else %}
+    <div class="card mb-3" data-testid="ai-analysis-section">
+      <div class="card-header">AI-анализ</div>
+      <div class="card-body">
+        <form method="post" action="/tenders/{{ tender.id }}/analysis" class="row g-2">
+          <div class="col-auto">
+            <select name="ai_tier" class="form-select form-select-sm" required data-testid="ai-tier-select">
+              <option value="">— выберите эшелон —</option>
+              {% for tier in ai_tier_options %}
+              <option value="{{ tier }}">{{ tier }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col">
+            <textarea name="ai_rationale" class="form-control form-control-sm" rows="1"
+                      placeholder="Обоснование" required maxlength="2000"></textarea>
+          </div>
+          <div class="col-auto">
+            <input type="text" name="ai_tool" class="form-control form-control-sm"
+                   placeholder="AI-инструмент" maxlength="100" style="width:120px">
+          </div>
+          <div class="col-auto">
+            <button type="submit" class="btn btn-primary btn-sm">Сохранить анализ</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="card mb-3">
+      <div class="card-header">Решение</div>
+      <div class="card-body">
+        <div class="d-flex gap-2 mb-3">
+          <a href="/tenders/{{ tender.id }}/action?action=taken"
+             class="btn btn-outline-primary btn-sm {% if tender.status=='taken' %}active{% endif %}"
+             data-testid="action-taken-btn">✅ Взять в работу</a>
+          <a href="/tenders/{{ tender.id }}/action?action=deferred"
+             class="btn btn-outline-warning btn-sm {% if tender.status=='deferred' %}active{% endif %}"
+             data-testid="action-deferred-btn">⏸ Отложить</a>
+          <a href="/tenders/{{ tender.id }}/action?action=rejected"
+             class="btn btn-outline-danger btn-sm {% if tender.status=='rejected' %}active{% endif %}"
+             data-testid="action-rejected-btn">❌ Отклонить</a>
+          {% if tender.status in ('taken','deferred','rejected') %}
+          <a href="/tenders/{{ tender.id }}/action?action=clear"
+             class="btn btn-outline-secondary btn-sm">↩ Сбросить</a>
+          {% endif %}
+        </div>
+        <form method="post" action="/tenders/{{ tender.id }}/action">
+          <div class="input-group input-group-sm">
+            <textarea name="notes" class="form-control" rows="1"
+                      placeholder="Заметка (необязательно)" maxlength="500"
+                      data-testid="action-notes-textarea"></textarea>
+            <button type="submit" name="action" value="notes" class="btn btn-outline-secondary">💬</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    {% if actions %}
+    <details>
+      <summary class="text-muted small mb-2">История действий ({{ actions|length }})</summary>
+      <ul class="list-group list-group-flush small" data-testid="action-history-list">
+        {% for a in actions %}
+        <li class="list-group-item px-0">
+          <strong>{{ a.action_type }}</strong> · {{ a.created_at.strftime('%d.%m.%Y %H:%M') }}
+          {% if a.notes %} · {{ a.notes }}{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </details>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

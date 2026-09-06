@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Админка — TenderAutomation{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+    <h2 class="mb-1">⚙️ Админ-панель</h2>
+    <p class="text-muted small mb-3">Всего тендеров в БД: <strong>{{ total_tenders }}</strong></p>
+
+    <!-- Collection Runner -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>🚀 Сбор тендеров</strong>
+            {% if collection_running %}
+            <span class="badge bg-warning text-dark">Выполняется...</span>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <form method="post" action="/admin/run-collection">
+                <button type="submit" class="btn btn-primary"
+                        {% if collection_running %}disabled{% endif %}>
+                    {% if collection_running %}
+                    ⏳ Парсинг запущен...
+                    {% else %}
+                    ▶️ Запустить сбор тендеров (B2B-Center + Bidzaar)
+                    {% endif %}
+                </button>
+            </form>
+
+            {% if collection_log %}
+            <div class="mt-3 alert {% if 'Ошибка' in collection_log[0] %}alert-danger{% else %}alert-info{% endif %}">
+                {% for line in collection_log %}
+                <div>{{ line }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <small class="text-muted d-block mt-2">
+                Запускает полный пайплайн: сбор с B2B-Center и Bidzaar → v1-квалификацию (keywords).<br>
+                Для V3 LLM-классификации запустите генератор отчёта отдельно.
+            </small>
+        </div>
+    </div>
+
+    <!-- Deadline Reconciliation -->
+    <div class="card mb-4">
+        <div class="card-header"><strong>🧭 Исправление дедлайнов и ссылок</strong></div>
+        <div class="card-body">
+            <form method="post" action="/admin/reconcile-deadlines"
+                  data-testid="deadline-reconcile-form">
+                <label class="form-label" for="deadline-reconcile-batch-size">Размер пакета</label>
+                <div class="d-flex gap-2 align-items-start">
+                    <input id="deadline-reconcile-batch-size" name="batch_size" type="number"
+                           class="form-control" style="max-width: 9rem" value="50"
+                           min="1" max="200" required
+                           data-testid="deadline-reconcile-batch-size">
+                    <button type="submit" class="btn btn-outline-primary"
+                            data-testid="deadline-reconcile-submit">
+                        Запустить исправление дедлайнов
+                    </button>
+                </div>
+            </form>
+            <small class="text-muted d-block mt-2">
+                Исправляет не более 200 записей за запуск. Существующие дедлайны и статусы не перезаписываются.
+            </small>
+
+            {% if reconciliation_error %}
+            <div class="alert alert-danger mt-3" role="status"
+                 data-testid="deadline-reconcile-result">{{ reconciliation_error }}</div>
+            {% elif reconciliation_result %}
+            <div class="alert alert-info mt-3" role="status"
+                 data-testid="deadline-reconcile-result">
+                {% if reconciliation_result.already_running %}
+                Исправление уже выполняется.
+                {% else %}
+                Проверено: {{ reconciliation_result.scanned }} ·
+                дедлайнов исправлено: {{ reconciliation_result.deadline_updated }} ·
+                ссылок исправлено: {{ reconciliation_result.url_updated }} ·
+                не найдено: {{ reconciliation_result.unresolved }} ·
+                ошибок: {{ reconciliation_result.failed }} ·
+                осталось кандидатов: {{ reconciliation_result.remaining_candidates }}
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Last runs -->
+    <div class="card">
+        <div class="card-header"><strong>📋 История запусков</strong></div>
+        <div class="card-body p-0">
+            <table class="table table-sm table-striped mb-0">
+                <thead>
+                    <tr>
+                        <th>Платформа</th>
+                        <th>Статус</th>
+                        <th>Новых</th>
+                        <th>Обновлено</th>
+                        <th>Время</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in run_history %}
+                    <tr>
+                        <td>
+                            <span class="badge {% if r.platform == 'b2bcenter' %}bg-primary{% else %}bg-info{% endif %}">
+                                {{ r.platform }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge {% if r.status == 'success' %}bg-success{% elif r.status == 'failed' %}bg-danger{% else %}bg-warning{% endif %}">
+                                {{ r.status }}
+                            </span>
+                        </td>
+                        <td>{{ r.new }}</td>
+                        <td>{{ r.updated }}</td>
+                        <td><small>{{ r.at[:19] }}</small></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

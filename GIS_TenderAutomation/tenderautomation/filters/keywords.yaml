@@ -1,0 +1,707 @@
+# Keyword qualification filters — Tier 1 (redesigned 2026-06-19)
+# Three-stage logic:
+#   1. HARD STOP — exclude immediately unless strong_marker present
+#   2. STRONG MARKERS — override hard stops, carry high weight
+#   3. SCORING — regular keyword scoring (old-style)
+
+# === HARD STOP WORDS (exclude immediately unless strong marker present) ===
+# weight values are informational only — hard stops don't contribute to score
+hard_stop:
+
+  # Sites & web development
+  - term: "создание сайта"
+    category: web
+    match_type: contains
+  - term: "разработка сайта"
+    category: web
+    match_type: contains
+  - term: "доработка сайта"
+    category: web
+    match_type: contains
+  - term: "поддержка сайта"
+    category: web
+    match_type: contains
+  - term: "сопровождение сайта"
+    category: web
+    match_type: contains
+  - term: "веб-сайт"
+    category: web
+    match_type: contains
+  - term: "наполнение сайта"
+    category: web
+    match_type: contains
+  - term: "продвижение сайта"
+    category: web
+    match_type: contains
+  - term: "редизайн сайта"
+    category: web
+    match_type: contains
+  - term: "лендинг"
+    category: web
+    match_type: contains
+  - term: "интернет-магазин"
+    category: web
+    match_type: contains
+  - term: "веб-портал"
+    category: web
+    match_type: contains
+  - term: "корпоративный портал"
+    category: web
+    match_type: contains
+  - term: "рекламные лендинги"
+    category: web
+    match_type: contains
+  - term: "SEO-продвижение"
+    category: web
+    match_type: contains
+  - term: "SEO продвижение"
+    category: web
+    match_type: contains
+  - term: "мобильное приложение"
+    category: web
+    match_type: contains
+
+  # PR, marketing, events
+  - term: "PR-продвижение"
+    category: marketing
+    match_type: contains
+  - term: "PR продвижение"
+    category: marketing
+    match_type: contains
+  - term: "пиар-поддержка"
+    category: marketing
+    match_type: contains
+  - term: "рекламные услуги"
+    category: marketing
+    match_type: contains
+  - term: "рекламная кампания"
+    category: marketing
+    match_type: contains
+  - term: "медийное сопровождение"
+    category: marketing
+    match_type: contains
+  - term: "БТЛ"
+    category: marketing
+    match_type: contains
+  - term: "BTL"
+    category: marketing
+    match_type: contains
+  - term: "организация мероприятия"
+    category: marketing
+    match_type: contains
+  - term: "проведение мероприятия"
+    category: marketing
+    match_type: contains
+  - term: "церемония открытия"
+    category: marketing
+    match_type: contains
+  - term: "гала-вечер"
+    category: marketing
+    match_type: contains
+  - term: "туристическая поездка"
+    category: marketing
+    match_type: contains
+  - term: "бронирование авиабилетов"
+    category: marketing
+    match_type: contains
+  - term: "программа лояльности"
+    category: marketing
+    match_type: contains
+  - term: "персональные механики"
+    category: marketing
+    match_type: contains
+  - term: "email-рассылок"
+    category: marketing
+    match_type: contains
+
+  # 1C and specialized business systems
+  - term: "1С сопровождение"
+    category: vertical_app
+    match_type: contains
+  - term: "1С доработка"
+    category: vertical_app
+    match_type: contains
+  - term: "1С внедрение"
+    category: vertical_app
+    match_type: contains
+  - term: "1С лицензии"
+    category: vertical_app
+    match_type: contains
+  - term: "DocsVision"
+    category: vertical_app
+    match_type: contains
+  - term: "Directum"
+    category: vertical_app
+    match_type: contains
+  - term: "ArcGIS"
+    category: vertical_app
+    match_type: contains
+
+  # Office and user equipment
+  - term: "офисная техника"
+    category: office
+    match_type: contains
+  - term: "оргтехника"
+    category: office
+    match_type: contains
+  - term: "принтеры"
+    category: office
+    match_type: contains
+  - term: "МФУ"
+    category: office
+    match_type: contains
+  - term: "картриджи"
+    category: office
+    match_type: contains
+  - term: "печатная инфраструктура"
+    category: office
+    match_type: contains
+  - term: "контрольно-кассовая техника"
+    category: office
+    match_type: contains
+  - term: "ККТ"
+    category: office
+    match_type: contains
+  - term: "кассовая техника"
+    category: office
+    match_type: contains
+  - term: "видеостены"
+    category: office
+    match_type: contains
+  - term: "светодиодные экраны"
+    category: office
+    match_type: contains
+
+  # Building systems & construction
+  - term: "авторский надзор"
+    category: construction
+    match_type: contains
+  - term: "инженерные сети здания"
+    category: construction
+    match_type: contains
+  - term: "вентиляция и кондиционирование"
+    category: construction
+    match_type: contains
+  - term: "строительно-монтажные работы"
+    category: construction
+    match_type: contains
+  - term: "буровзрывные работы"
+    category: construction
+    match_type: contains
+  - term: "дорожная инфраструктура"
+    category: construction
+    match_type: contains
+  - term: "железнодорожная инфраструктура"
+    category: construction
+    match_type: contains
+  - term: "эксплуатация зданий"
+    category: construction
+    match_type: contains
+  - term: "техническое обслуживание здания"
+    category: construction
+    match_type: contains
+  - term: "административно-хозяйственное обслуживание"
+    category: construction
+    match_type: contains
+  - term: "планирование размещения рабочих мест"
+    category: construction
+    match_type: contains
+
+  # Physical security & retail equipment
+  - term: "защита товаров в открытой выкладке"
+    category: physical_security
+    match_type: contains
+  - term: "антикражные системы"
+    category: physical_security
+    match_type: contains
+  - term: "противокражные системы"
+    category: physical_security
+    match_type: contains
+  - term: "охранные услуги"
+    category: physical_security
+    match_type: contains
+
+  # Telephony & narrow vendor equipment
+  - term: "виртуальная АТС"
+    category: telephony
+    match_type: contains
+  - term: "IPTV"
+    category: telephony
+    match_type: contains
+  - term: "эфирный комплекс"
+    category: telephony
+    match_type: contains
+
+  # Additional context-specific hard stops (iteration 3)
+  - term: "ведение социальных сетей"
+    category: marketing
+    match_type: contains
+  - term: "разработка контента"
+    category: marketing
+    match_type: contains
+  - term: "базы 1С УТ"
+    category: vertical_app
+    match_type: contains
+  - term: "миграции между системами 1С"
+    category: vertical_app
+    match_type: contains
+  - term: "администрирование сайтов"
+    category: web
+    match_type: contains
+  - term: "продвижение сайтов"
+    category: web
+    match_type: contains
+
+# === STRONG GIS MARKERS (override hard stops, carry scoring weight) ===
+strong_markers:
+  - term: "DevOps"
+  - term: "DevSecOps"
+  - term: "Kubernetes"
+  - term: "OpenShift"
+  - term: "Docker"
+  - term: "CI/CD"
+  - term: "GitLab"
+  - term: "инфраструктурный аудит"
+  - term: "аудит IT-инфраструктуры"
+  - term: "аудит ИТ-инфраструктуры"
+  - term: "серверная инфраструктура"
+  - term: "облачная инфраструктура"
+  - term: "IaaS"
+  - term: "виртуализац"
+  - term: "VMware"
+  - term: "Hyper-V"
+  - term: "Astra Linux"
+  - term: "Active Directory"
+  - term: "PostgreSQL"
+  - term: "СУБД"
+  - term: "резервное копирование"
+  - term: "Veeam"
+  - term: "Veritas NetBackup"
+  - term: "катастрофоустойчивость"
+  - term: "миграция инфраструктуры"
+  - term: "система хранения данных"
+  - term: "СХД"
+  - term: "Ceph"
+  - term: "сетевой инфраструктуры"
+  - term: "мониторинг IT-инфраструктуры"
+  - term: "Zabbix"
+  - term: "Prometheus"
+  - term: "Grafana"
+  - term: "администрирование серверов"
+  - term: "сопровождение инфраструктурного ПО"
+  - term: "обследование IT-инфраструктуры"
+  - term: "обследование ИТ-инфраструктуры"
+  - term: "серверные операционные системы"
+  - term: "системное администрирование IT-инфраструктуры"
+  - term: "системное администрирование ИТ-инфраструктуры"
+  - term: "аутсорсинг системного администрирования"
+  - term: "развёртывание IT-инфраструктуры"
+  - term: "развертывание IT-инфраструктуры"
+  - term: "стратегия развития IT-инфраструктуры"
+  - term: "кластер Ceph"
+  - term: "администрирование Linux-серверов"
+  - term: "поддержка Linux-серверов"
+  - term: "сопровождение IT-инфраструктуры"
+  - term: "поддержка IT-инфраструктуры"
+  - term: "оптимизация инфраструктуры"
+  - term: "архитектура сети"
+  - term: "инфраструктурное ПО"
+  - term: "серверы баз данных"
+  - term: "MS SQL Server"
+  - term: "аудит IT-ландшафта"
+  - term: "независимый аудит инфраструктуры"
+  - term: "аудит текущего состояния"
+  - term: "IT аудит"
+  - term: "ИТ аудит"
+
+# === SCORING RULES (regular keyword scoring) ===
+scoring:
+  # === Cloud & Infrastructure (high weight) ===
+  - term: "DevOps"
+    weight: 30
+    category: cloud
+    match_type: contains
+  - term: "Kubernetes"
+    weight: 25
+    category: cloud
+    match_type: contains
+  - term: "docker"
+    weight: 15
+    category: cloud
+    match_type: contains
+  - term: "OpenShift"
+    weight: 20
+    category: cloud
+    match_type: contains
+  - term: "CI/CD"
+    weight: 20
+    category: cloud
+    match_type: contains
+  - term: "виртуализац"
+    weight: 20
+    category: infrastructure
+    match_type: contains
+  - term: "облако"
+    weight: 12
+    category: cloud
+    match_type: contains
+  - term: "cloud"
+    weight: 12
+    category: cloud
+    match_type: contains
+
+  # === Security & Compliance ===
+  - term: "аудит безопасност"
+    weight: 25
+    category: security
+    match_type: contains
+  - term: "информационная безопасность"
+    weight: 20
+    category: security
+    match_type: contains
+  - term: "кибербезопасност"
+    weight: 20
+    category: security
+    match_type: contains
+  - term: "pentest"
+    weight: 25
+    category: security
+    match_type: contains
+  - term: "тестирование на проникновение"
+    weight: 18
+    category: security
+    match_type: contains
+  - term: "анализ защищённости"
+    weight: 15
+    category: security
+    match_type: contains
+
+  # === Backup & HA ===
+  - term: "резервное копирование"
+    weight: 18
+    category: backup
+    match_type: contains
+  - term: "Veeam"
+    weight: 18
+    category: backup
+    match_type: contains
+  - term: "Veritas NetBackup"
+    weight: 18
+    category: backup
+    match_type: contains
+  - term: "отказоустойчив"
+    weight: 15
+    category: backup
+    match_type: contains
+
+  # === Migration & Import Substitution ===
+  - term: "миграц"
+    weight: 12
+    category: migration
+    match_type: contains
+  - term: "импортозамещен"
+    weight: 18
+    category: migration
+    match_type: contains
+
+  # === Monitoring (reduced weight — too broad) ===
+  - term: "мониторинг IT-инфраструктуры"
+    weight: 15
+    category: monitoring
+    match_type: contains
+  - term: "Zabbix"
+    weight: 15
+    category: monitoring
+    match_type: contains
+  - term: "Prometheus"
+    weight: 15
+    category: monitoring
+    match_type: contains
+  - term: "Grafana"
+    weight: 10
+    category: monitoring
+    match_type: contains
+  - term: "мониторинг"
+    weight: 0
+    category: monitoring
+    match_type: contains
+
+  # === Databases ===
+  - term: "PostgreSQL"
+    weight: 15
+    category: database
+    match_type: contains
+  - term: "Postgres Pro"
+    weight: 15
+    category: database
+    match_type: contains
+  - term: "ClickHouse"
+    weight: 12
+    category: database
+    match_type: contains
+  - term: "Greenplum"
+    weight: 12
+    category: database
+    match_type: contains
+
+  # === Infrastructure (broad terms — low weight) ===
+  - term: "инфраструктур"
+    weight: 5
+    category: infrastructure
+    match_type: contains
+  - term: "серверная инфраструктура"
+    weight: 15
+    category: infrastructure
+    match_type: contains
+  - term: "серверное оборудование"
+    weight: 12
+    category: infrastructure
+    match_type: contains
+  - term: "СХД"
+    weight: 12
+    category: infrastructure
+    match_type: contains
+  - term: "система хранения данных"
+    weight: 12
+    category: infrastructure
+    match_type: contains
+  - term: "NGFW"
+    weight: 10
+    category: security
+    match_type: contains
+  - term: "межсетевой экран"
+    weight: 10
+    category: security
+    match_type: contains
+
+  # === IT Audit (high weight — core GIS competency) ===
+  - term: "аудит IT-инфраструктуры"
+    weight: 25
+    category: audit
+    match_type: contains
+  - term: "аудит ИТ-инфраструктуры"
+    weight: 25
+    category: audit
+    match_type: contains
+  - term: "обследование IT-инфраструктуры"
+    weight: 25
+    category: audit
+    match_type: contains
+  - term: "обследование ИТ-инфраструктуры"
+    weight: 25
+    category: audit
+    match_type: contains
+  - term: "стратегия развития IT-инфраструктуры"
+    weight: 20
+    category: audit
+    match_type: contains
+  - term: "инфраструктурный аудит"
+    weight: 20
+    category: audit
+    match_type: contains
+
+  # === Systems Administration (core GIS) ===
+  - term: "системное администрирование"
+    weight: 15
+    category: support
+    match_type: contains
+  - term: "администрирование Linux-серверов"
+    weight: 18
+    category: support
+    match_type: contains
+  - term: "поддержка Linux-серверов"
+    weight: 18
+    category: support
+    match_type: contains
+  - term: "администрирование серверных ОС"
+    weight: 15
+    category: support
+    match_type: contains
+  - term: "сопровождение IT-инфраструктуры"
+    weight: 15
+    category: support
+    match_type: contains
+  - term: "поддержка IT-инфраструктуры"
+    weight: 15
+    category: support
+    match_type: contains
+  - term: "развёртывание IT-инфраструктуры"
+    weight: 15
+    category: support
+    match_type: contains
+  - term: "развертывание IT-инфраструктуры"
+    weight: 15
+    category: support
+    match_type: contains
+  - term: "оптимизация инфраструктуры"
+    weight: 15
+    category: support
+    match_type: contains
+
+  # === Storage & Specialized Tech ===
+  - term: "Ceph"
+    weight: 20
+    category: storage
+    match_type: contains
+  - term: "кластер Ceph"
+    weight: 22
+    category: storage
+    match_type: contains
+  - term: "MS SQL Server"
+    weight: 12
+    category: database
+    match_type: contains
+  - term: "серверы баз данных"
+    weight: 10
+    category: database
+    match_type: contains
+
+  # === Network ===
+  - term: "сетевой инфраструктуры"
+    weight: 10
+    category: network
+    match_type: contains
+  - term: "архитектура сети"
+    weight: 10
+    category: network
+    match_type: contains
+
+  # === Citrix ===
+  - term: "Citrix"
+    weight: 12
+    category: vendor
+    match_type: contains
+
+  # === Soft negative: license supply (reduce score, don't hard-block) ===
+  - term: "поставка программного обеспечения"
+    weight: -15
+    category: soft_exclude
+    match_type: contains
+  - term: "предоставление права использования"
+    weight: -15
+    category: soft_exclude
+    match_type: contains
+  - term: "продление лицензий"
+    weight: -10
+    category: soft_exclude
+    match_type: contains
+
+  # === Support & Maintenance (reduced weight — too broad) ===
+  - term: "администрирован"
+    weight: 12
+    category: support
+    match_type: contains
+  - term: "техническая поддержка"
+    weight: 3
+    category: support
+    match_type: contains
+    stop_words:
+      - "рабочих мест"
+      - "АРМ"
+      - "сайта"
+      - "интернет-аптек"
+      - "ККТ"
+      - "принтер"
+      - "МФУ"
+  - term: "техническ"
+    weight: 2
+    category: support
+    match_type: contains
+  - term: "поддержк"
+    weight: 2
+    category: support
+    match_type: contains
+  - term: "сопровожден"
+    weight: 2
+    category: support
+    match_type: contains
+
+  # === Infrastructure Support (managed services — core/review tier) ===
+  - term: "техническая поддержка IT-инфраструктуры"
+    weight: 12
+    category: infra_support
+    match_type: contains
+  - term: "поддержка IT-инфраструктуры филиалов"
+    weight: 10
+    category: infra_support
+    match_type: contains
+  - term: "сопровождение инфраструктурного ПО"
+    weight: 12
+    category: infra_support
+    match_type: contains
+  - term: "поддержка серверного оборудования"
+    weight: 10
+    category: infra_support
+    match_type: contains
+  - term: "поддержка сетевого оборудования"
+    weight: 10
+    category: infra_support
+    match_type: contains
+  - term: "Kafka"
+    weight: 8
+    category: middleware
+    match_type: contains
+  - term: "контейнерн"
+    weight: 10
+    category: cloud
+    match_type: contains
+  - term: "NetApp"
+    weight: 10
+    category: storage
+    match_type: contains
+  - term: "ленточн"
+    weight: 4
+    category: storage
+    match_type: contains
+  - term: "система резервного копирования"
+    weight: 15
+    category: backup
+    match_type: contains
+  - term: "сервисное обслуживание IT-инфраструктуры"
+    weight: 12
+    category: infra_support
+    match_type: contains
+  - term: "модернизация IT-инфраструктуры"
+    weight: 12
+    category: infra_support
+    match_type: contains
+
+  # === Additional Audit scoring ===
+  - term: "аудит IT-ландшафта"
+    weight: 15
+    category: audit
+    match_type: contains
+  - term: "независимый аудит инфраструктуры"
+    weight: 20
+    category: audit
+    match_type: contains
+  - term: "аудит текущего состояния"
+    weight: 12
+    category: audit
+    match_type: contains
+  - term: "IT аудит"
+    weight: 10
+    category: audit
+    match_type: contains
+  - term: "ИТ аудит"
+    weight: 10
+    category: audit
+    match_type: contains
+  - term: "проектирование IT-инфраструктуры"
+    weight: 15
+    category: audit
+    match_type: contains
+
+  # === AI & ML ===
+  - term: "искусственный интеллект"
+    weight: 15
+    category: ai
+    match_type: contains
+  - term: "машинное обучение"
+    weight: 15
+    category: ai
+    match_type: contains
+  - term: "MLOps"
+    weight: 20
+    category: ai
+    match_type: contains

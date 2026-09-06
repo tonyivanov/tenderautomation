@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Тендеры{% endblock %}
+{% block content %}
+
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-3">
+    {% for tab_val, tab_label in tabs %}
+    <li class="nav-item">
+        <a class="nav-link {% if filters.tab == tab_val %}active{% endif %}"
+           href="/tenders?tab={{ tab_val }}&platform={{ filters.platform or '' }}&search={{ filters.search or '' }}">
+            {{ tab_label }}
+            {% if tab_val != 'all' %}
+            {% set badge_colors = {'P1': 'bg-danger', 'P2': 'bg-warning text-dark', 'active': 'bg-success', 'taken': 'bg-primary', 'deferred': 'bg-warning text-dark', 'rejected': 'bg-danger'} %}
+            <span class="badge {{ badge_colors.get(tab_val, 'bg-secondary') }} ms-1">
+                {{ counts.get(tab_val, 0) }}
+            </span>
+            {% endif %}
+        </a>
+    </li>
+    {% endfor %}
+</ul>
+
+<!-- Summary -->
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <small class="text-muted">
+        Всего в БД: <strong>{{ total_count }}</strong>
+        {% if last_collection.at %}
+        · Последний сбор: {{ last_collection.at }} · Новых: {{ last_collection.new_count }}
+        {% endif %}
+    </small>
+    <a href="/export/zip" class="btn btn-success btn-sm">⬇ Скачать ZIP</a>
+</div>
+
+<!-- Filters -->
+<form class="row g-2 mb-3" method="get" action="/tenders">
+    <input type="hidden" name="tab" value="{{ filters.tab }}">
+    <div class="col-auto">
+        <select name="platform" class="form-select form-select-sm">
+            <option value="">Все площадки</option>
+            <option value="b2bcenter" {% if filters.platform == 'b2bcenter' %}selected{% endif %}>B2B-Center</option>
+            <option value="bidzaar" {% if filters.platform == 'bidzaar' %}selected{% endif %}>Bidzaar</option>
+        </select>
+    </div>
+    <div class="col-auto">
+        <input type="text" name="search" class="form-control form-control-sm" placeholder="Поиск..."
+               value="{{ filters.search or '' }}">
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-secondary btn-sm">Применить</button>
+    </div>
+</form>
+
+<!-- Table -->
+<table class="table table-hover table-sm align-middle">
+    <thead class="table-light">
+        <tr>
+            <th style="width:35%">Название</th>
+            <th>Пл.</th>
+            <th>Очередь</th>
+            <th>Fit</th>
+            <th>Domain</th>
+            <th>НМЦК</th>
+            <th>⏰ Дедлайн</th>
+            <th style="width:110px">Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for t in tenders %}
+        <tr>
+            <td>
+                <a href="/tenders/{{ t.id }}">{{ t.title[:90] }}{% if t.title|length > 90 %}…{% endif %}</a>
+                {% if t.buyer %}<br><small class="text-muted">{{ t.buyer[:50] }}</small>{% endif %}
+            </td>
+            <td><span class="badge {% if t.platform == 'b2bcenter' %}bg-primary{% else %}bg-info{% endif %}">{{ t.platform }}</span></td>
+            <td>
+                {% set q = t.v3_queue %}
+                {% if q == 'P1' %}
+                <span class="badge bg-danger">P1</span>
+                {% elif q == 'P2' %}
+                <span class="badge bg-warning text-dark">P2</span>
+                {% elif q == 'Reject' %}
+                <span class="badge bg-secondary">Reject</span>
+                {% else %}
+                <span class="text-muted">—</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if t.v3_fit %}
+                <span class="badge {% if t.v3_fit >= 85 %}bg-success{% elif t.v3_fit >= 50 %}bg-warning text-dark{% else %}bg-danger{% endif %}">{{ t.v3_fit }}</span>
+                {% else %}<span class="text-muted">—</span>{% endif %}
+            </td>
+            <td><small>{{ t.v3_domain }}</small></td>
+            <td class="text-end small">{{ "{:,.0f}".format(t.budget) if t.budget else '—' }}</td>
+            <td class="small fw-bold {% if t.expired %}text-danger{% elif t.deadline %}text-success{% endif %}">
+                {{ t.deadline.strftime('%d.%m.%Y') if t.deadline else '—' }}
+            </td>
+            <td>
+                <div class="d-flex gap-1">
+                    <a href="/tenders/{{ t.id }}" class="btn btn-sm btn-outline-primary" title="Детали">🔍</a>
+                </div>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="text-center text-muted py-4">Нет тендеров</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Pagination -->
+<div class="d-flex justify-content-between">
+    {% if page > 1 %}
+    <a href="?tab={{ filters.tab }}&platform={{ filters.platform or '' }}&search={{ filters.search or '' }}&page={{ page - 1 }}"
+       class="btn btn-sm btn-outline-secondary">← Предыдущая</a>
+    {% else %}<span></span>{% endif %}
+    <span class="text-muted small pt-1">Страница {{ page }}</span>
+    {% if has_next %}
+    <a href="?tab={{ filters.tab }}&platform={{ filters.platform or '' }}&search={{ filters.search or '' }}&page={{ page + 1 }}"
+       class="btn btn-sm btn-outline-secondary">Следующая →</a>
+    {% else %}<span></span>{% endif %}
+</div>
+{% endblock %}

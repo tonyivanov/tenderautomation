@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Вход — TenderAutomation{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+  <div class="col-md-4">
+    <h4 class="mb-4">Вход в систему</h4>
+    {% if error %}
+    <div class="alert alert-danger" data-testid="login-error-msg">{{ error }}</div>
+    {% endif %}
+    <form method="post" action="/login">
+      <div class="mb-3">
+        <label class="form-label">Имя пользователя</label>
+        <input type="text" name="username" class="form-control" required
+               data-testid="login-username-input" autocomplete="username">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Пароль</label>
+        <input type="password" name="password" class="form-control" required
+               data-testid="login-password-input" autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-primary w-100" data-testid="login-submit-btn">Войти</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

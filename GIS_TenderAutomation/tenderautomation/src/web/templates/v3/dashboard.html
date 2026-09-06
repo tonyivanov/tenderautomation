@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}V3 Классификация — {{ queue }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3">
+    <h2 class="mb-1">🧠 V3 LLM Классификация</h2>
+    <p class="text-muted small mb-3">Всего в кэше: {{ total }} тендеров</p>
+
+    <!-- Queue tabs -->
+    <ul class="nav nav-tabs mb-3">
+        {% set qs = [
+            ('all', '📋 Все'),
+            ('active', '🟢 Активные'),
+            ('P1', '🔥 P1 · Срочно'),
+            ('P2', '📌 P2 · На проверку'),
+            ('Reject', '🚫 Reject')
+        ] %}
+        {% for q_val, q_label in qs %}
+        <li class="nav-item">
+            <a class="nav-link {% if queue == q_val %}active{% endif %}"
+               href="/v3?queue={{ q_val }}">
+                {{ q_label }}
+                {% if q_val == 'P1' %}
+                <span class="badge bg-danger ms-1">{{ stats.get('P1', 0) }}</span>
+                {% elif q_val == 'P2' %}
+                <span class="badge bg-warning text-dark ms-1">{{ stats.get('P2', 0) }}</span>
+                {% elif q_val == 'Reject' %}
+                <span class="badge bg-secondary ms-1">{{ stats.get('Reject', 0) }}</span>
+                {% elif q_val == 'active' %}
+                <span class="badge bg-success ms-1">{{ active_count }}</span>
+                {% endif %}
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+
+    {% if queue == 'active' and no_dl_count %}
+    <div class="alert alert-warning py-1 px-3 small mb-2">
+        ⚠️ Ещё <strong>{{ no_dl_count }}</strong> тендеров P1/P2 без указанного дедлайна —
+        <a href="/v3?queue=P1">проверить вручную</a>.
+    </div>
+    {% endif %}
+
+    <!-- Tenders table -->
+    <div class="table-responsive">
+        <table class="table table-hover table-sm align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th style="width:40%">Тендер</th>
+                    <th>Пл.</th>
+                    <th>Очередь</th>
+                    <th>Verdict</th>
+                    <th>Fit</th>
+                    <th>⏰ Дедлайн</th>
+                    <th>Judge</th>
+                    <th>Domain</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in tenders %}
+                <tr>
+                    <td>
+                        <a href="{{ t.url }}" target="_blank" class="text-decoration-none" title="{{ t.reason or '' }}">
+                            {{ t.normalized_title[:120] }}{% if t.normalized_title|length > 120 %}…{% endif %}
+                        </a>
+                        {% if t.buyer %}
+                        <br><small class="text-muted">{{ t.buyer[:60] }}</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge {% if t.platform == 'b2bcenter' %}bg-primary{% else %}bg-info{% endif %}">
+                            {{ t.platform }}
+                        </span>
+                    </td>
+                    <td>
+                        {% set q = t.queue %}
+                        <span class="badge rounded-pill {% if q == 'P1' %}bg-danger{% elif q == 'P2' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                            {{ q }}
+                        </span>
+                    </td>
+                    <td>
+                        {% set v = t.verdict %}
+                        <span class="badge {% if v == 'core' %}bg-success{% elif v == 'review' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                            {{ v }}
+                        </span>
+                    </td>
+                    <td>{{ t.fit_score }}</td>
+                    <td class="small fw-bold {% if t.expired %}text-danger{% elif t.deadline %}text-success{% endif %}">
+                        {{ t.deadline[:10] if t.deadline else '—' }}
+                    </td>
+                    <td>
+                        {% if t.judge_verdict %}
+                        <span class="badge {% if t.judge_verdict == 'core' %}bg-success{% elif t.judge_verdict == 'review' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                            {{ t.judge_verdict }} ({{ t.judge_fit_score }})
+                        </span>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td><small>{{ t.primary_domain }}</small></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if not tenders %}
+    <div class="text-center text-muted py-5">
+        <p class="fs-4">📭 Нет тендеров в этой очереди</p>
+        <p>Запустите <code>python -m core.cli run-pipeline</code> для сбора и классификации.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

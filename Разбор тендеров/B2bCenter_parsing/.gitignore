@@ -1,0 +1,11 @@
+venv/
+__pycache__/
+*.pyc
+data/*.db
+data/*.db-journal
+data/*.txt
+data/recon/
+auth/
+auth.txt
+.vscode/
+.idea/

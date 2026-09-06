@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}История тендеров{% endblock %}
+{% block content %}
+<h5 class="mb-3">История обработанных тендеров</h5>
+
+<form class="row g-2 mb-3" method="get" action="/history">
+  <div class="col-auto">
+    <select name="platform" class="form-select form-select-sm" data-testid="history-filter-platform">
+      <option value="">Все площадки</option>
+      <option value="b2bcenter" {% if filters.platform == 'b2bcenter' %}selected{% endif %}>B2B-Center</option>
+      <option value="bidzaar" {% if filters.platform == 'bidzaar' %}selected{% endif %}>Bidzaar</option>
+    </select>
+  </div>
+  <div class="col-auto">
+    <select name="status" class="form-select form-select-sm" data-testid="history-filter-status">
+      <option value="">Все решения</option>
+      <option value="taken" {% if filters.status == 'taken' %}selected{% endif %}>Взяты в работу</option>
+      <option value="rejected" {% if filters.status == 'rejected' %}selected{% endif %}>Отклонены</option>
+      <option value="deferred" {% if filters.status == 'deferred' %}selected{% endif %}>Отложены</option>
+    </select>
+  </div>
+  <div class="col-auto">
+    <input type="text" name="search" class="form-control form-control-sm" placeholder="Поиск..."
+           value="{{ filters.search or '' }}" data-testid="history-filter-search">
+  </div>
+  <div class="col-auto">
+    <button type="submit" class="btn btn-outline-secondary btn-sm" data-testid="history-filter-submit">Применить</button>
+  </div>
+</form>
+
+<table class="table table-sm table-hover" data-testid="history-list-table">
+  <thead class="table-light">
+    <tr>
+      <th>Название</th><th>Площадка</th><th>Заказчик</th>
+      <th>Решение</th><th>Дата решения</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for tender in items %}
+    <tr>
+      <td><a href="/tenders/{{ tender.id }}">{{ tender.title[:70] }}{% if tender.title|length > 70 %}…{% endif %}</a></td>
+      <td><span class="badge bg-secondary">{{ tender.platform }}</span></td>
+      <td class="text-muted small">{{ tender.buyer or '—' }}</td>
+      <td>
+        {% if tender.status.value == 'taken' %}<span class="badge bg-success">Взят</span>
+        {% elif tender.status.value == 'rejected' %}<span class="badge bg-danger">Отклонён</span>
+        {% elif tender.status.value == 'deferred' %}<span class="badge bg-warning text-dark">Отложен</span>
+        {% else %}<span class="badge bg-secondary">{{ tender.status.value }}</span>{% endif %}
+      </td>
+      <td class="small text-muted">{{ tender.updated_at.strftime('%d.%m.%Y') }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" class="text-center text-muted py-4">История пуста</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div class="d-flex justify-content-between">
+  {% if page > 1 %}
+  <a href="?page={{ page-1 }}&platform={{ filters.platform or '' }}&status={{ filters.status or '' }}&search={{ filters.search or '' }}"
+     class="btn btn-sm btn-outline-secondary">← Предыдущая</a>
+  {% else %}<span></span>{% endif %}
+  <span class="text-muted small pt-1">Страница {{ page }}</span>
+  {% if has_next %}
+  <a href="?page={{ page+1 }}&platform={{ filters.platform or '' }}&status={{ filters.status or '' }}&search={{ filters.search or '' }}"
+     class="btn btn-sm btn-outline-secondary">Следующая →</a>
+  {% else %}<span></span>{% endif %}
+</div>
+{% endblock %}

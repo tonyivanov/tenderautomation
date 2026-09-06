@@ -1,0 +1,143 @@
+"""Stage 6-8: Aggregation — v2.4 (procurement_type 5 классов, entity gate, mixed supply)."""
+from __future__ import annotations
+
+from .constants import MANUAL_SAFETY_NET
+from .models import CandidateResult, ClassifierDecision
+
+
+CATEGORY_RANK = {"low": 0, "lowish": 1, "review": 2, "core": 3}
+
+
+def _max_category(a: str, b: str) -> str:
+    return a if CATEGORY_RANK.get(a, 0) >= CATEGORY_RANK.get(b, 0) else b
+
+
+def aggregate(
+    tender_id: str,
+    original_title: str,
+    normalized_text: str,
+    hard_stop: ClassifierDecision,
+    rules: ClassifierDecision,
+    action_object: ClassifierDecision,
+    entity_gate: ClassifierDecision,
+    strong_object_service: ClassifierDecision,
+    semantic_core_title: str = "",
+    v1_tier: str = "",
+    v1_score: int = 0,
+    v1_category: str = "",
+) -> CandidateResult:
+    result = CandidateResult(
+        tender_id=tender_id,
+        original_title=original_title,
+        normalized_title=normalized_text,
+        semantic_core_title=semantic_core_title,
+        hard_stop=hard_stop,
+        rules=rules,
+        action_object=action_object,
+        entity_gate=entity_gate,
+        strong_object_service=strong_object_service,
+        v1_tier=v1_tier,
+        v1_score=v1_score,
+        v1_category=v1_category,
+    )
+
+    legacy_candidate = v1_tier in ("qualified", "in_review") or v1_category in ("core", "review", "lowish")
+    result.legacy = ClassifierDecision(candidate=legacy_candidate, confidence=0.8 if legacy_candidate else 0.0,
+                                       reason="legacy_v1_scorer" if legacy_candidate else "",
+                                       detail={"v1_tier": v1_tier, "v1_category": v1_category})
+
+    result.has_strong_it_signal = rules.candidate
+
+    # Disagreement
+    explicit_decisions = []
+    if rules.candidate: explicit_decisions.append("relevant")
+    if hard_stop.candidate and hard_stop.confidence >= 0.99: explicit_decisions.append("non_relevant")
+    result.classifier_disagreement = "relevant" in explicit_decisions and "non_relevant" in explicit_decisions
+    if hard_stop.candidate and result.has_strong_it_signal: result.classifier_disagreement = True
+
+    # Procurement type — 5 классов (ТЗ §7)
+    license_signals = ["продление лицензий", "сертификаты технической поддержки"]
+    supply_signals = ["поставка", "приобретение", "закупка оборудования", "закупка лицензий",
+                      "предоставление права использования"]
+    service_signals = ["услуги", "работы", "внедрение", "настройка", "миграция", "модернизация",
+                       "обследование", "аудит", "анализ", "проектирование", "администрирование",
+                       "сопровождение", "техническая поддержка", "развертывание", "развёртывание",
+                       "оптимизация", "экспертиза", "тестирование", "пентест", "оказание услуг",
+                       "закупка услуг", "закупка работ", "услуги по", "работы по", "разработка"]
+
+    has_license = any(w in normalized_text for w in license_signals)
+    has_supply = any(w in normalized_text for w in supply_signals)
+    has_service = any(w in normalized_text for w in service_signals)
+
+    if has_license and not has_service: result.procurement_type = "licenses_only"
+    elif has_supply and has_service: result.procurement_type = "mixed_supply_and_services"
+    elif has_supply and not has_service: result.supply_only = True; result.procurement_type = "supply_only"
+    elif has_service: result.procurement_type = "services_only"
+    else: result.procurement_type = "unknown"
+
+    # Positive candidate (ТЗ §16)
+    result.positive_candidate = any([
+        legacy_candidate, rules.candidate, action_object.candidate,
+        entity_gate.candidate, strong_object_service.candidate,
+    ])
+
+    # Mixed supply + strong IT + infra service (ТЗ §14)
+    strong_objs = ["центр обработки данных", "цод", "облачная инфраструктура", "серверное оборудование",
+                   "система хранения данных", "схд", "резервное копирование", "сетевая инфраструктура",
+                   "kubernetes", "oracle database", "oracle db", "netbackup", "veeam", "linux сервер"]
+    infra_svcs = ["внедрение", "настройка", "миграция", "модернизация", "сопровождение",
+                  "администрирование", "техническая поддержка"]
+    if result.procurement_type == "mixed_supply_and_services":
+        if any(o in normalized_text for o in strong_objs) and any(s in normalized_text for s in infra_svcs):
+            result.positive_candidate = True
+            result.decision_reasons.append("mixed_supply_infra")
+
+    result.selected_for_human_review = result.positive_candidate or result.classifier_disagreement
+
+    # Safety net
+    for net_word in MANUAL_SAFETY_NET:
+        if net_word in normalized_text:
+            result.positive_candidate = True; result.selected_for_human_review = True
+            result.decision_reasons.append("manual_safety_net"); break
+
+    # Auto-reject
+    if hard_stop.candidate and hard_stop.confidence >= 0.99:
+        if not result.has_strong_it_signal and not entity_gate.candidate and not legacy_candidate:
+            result.auto_reject = True
+    if result.auto_reject: result.selected_for_human_review = False; result.positive_candidate = False
+
+    # Reasons
+    if legacy_candidate: result.decision_reasons.append("legacy_v1_scorer")
+    if rules.candidate: result.decision_reasons.append("strong_profile_marker")
+    if entity_gate.candidate: result.decision_reasons.append("entity_gate")
+    if strong_object_service.candidate: result.decision_reasons.append("strong_object_service")
+    if action_object.candidate: result.decision_reasons.append("action_object_pair")
+    if result.classifier_disagreement: result.decision_reasons.append("classifier_disagreement")
+
+    # Priority
+    priority = 0
+    if legacy_candidate: priority += {"core": 30, "review": 18, "lowish": 10}.get(v1_category, 5)
+    if rules.candidate: priority += min(rules.detail.get("total_weight", 0), 40)
+    if entity_gate.candidate: priority += 20
+    if strong_object_service.candidate: priority += 15
+    if action_object.candidate: priority += 15
+    if result.has_strong_it_signal: priority += 10
+    if result.classifier_disagreement: priority += 5
+
+    if result.procurement_type in ("supply_only", "licenses_only"):
+        result.review_priority_score = min(priority, 25)
+    else:
+        result.review_priority_score = min(priority, 100)
+    if hard_stop.candidate and result.has_strong_it_signal:
+        result.review_priority_score = max(result.review_priority_score, 8)
+
+    # Queue
+    if result.auto_reject: result.review_queue = "reject"
+    elif result.positive_candidate and result.review_priority_score >= 40: result.review_queue = "P1"
+    elif result.positive_candidate: result.review_queue = "P2"
+    else: result.review_queue = "reject"
+    if result.procurement_type in ("supply_only", "licenses_only") and result.review_queue == "P1":
+        result.review_queue = "P2"; result.review_priority_score = min(result.review_priority_score, 25)
+
+    result.candidate_for_human_review = result.selected_for_human_review
+    return result

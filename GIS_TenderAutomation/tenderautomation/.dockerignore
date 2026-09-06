@@ -1,0 +1,16 @@
+.git
+.env
+.env.*
+!.env.example
+!.env.production.example
+venv
+.venv
+__pycache__
+.pytest_cache
+.hypothesis
+*.egg-info
+data
+graphify-out
+aidlc-docs
+tests
+.env

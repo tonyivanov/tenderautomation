@@ -1,0 +1,33 @@
+"""Stage 3: Strong Object + Service Gate (ТЗ §13)."""
+from __future__ import annotations
+
+from .models import ClassifierDecision
+
+STRONG_IT_OBJECTS = [
+    "центр обработки данных", "цод", "облачная инфраструктура",
+    "виртуальные вычислительные ресурсы", "виртуальных вычислительных ресурсов",
+    "серверное оборудование", "система хранения данных", "схд",
+    "резервное копирование", "архитектура сети", "сетевая инфраструктура",
+    "контейнеризация", "kubernetes", "oracle database", "oracle db",
+    "netbackup", "veeam", "linux сервер", "инфраструктурное по",
+    "программно аппаратный комплекс",
+]
+
+SERVICE_SIGNALS = [
+    "услуги", "работы", "поддержка", "сопровождение", "обслуживание",
+    "аренда", "предоставление", "размещение", "внедрение", "настройка",
+    "миграция", "модернизация", "экспертиза", "аудит", "обследование",
+]
+
+
+def apply_strong_object_service_gate(normalized_text: str, procurement_type: str = "") -> ClassifierDecision:
+    has_strong = any(obj in normalized_text for obj in STRONG_IT_OBJECTS)
+    has_service = any(svc in normalized_text for svc in SERVICE_SIGNALS)
+
+    if has_strong and has_service:
+        return ClassifierDecision(
+            candidate=True, confidence=0.80,
+            reason="strong_object_service",
+            detail={"has_strong_object": True, "has_service": True},
+        )
+    return ClassifierDecision(candidate=False, confidence=0.0)

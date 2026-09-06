@@ -1,0 +1,15 @@
+platform_id: bidzaar
+display_name: "Bidzaar"
+base_url: "https://bidzaar.com"
+auth_method: none
+rate_limit_sec: 0.5
+field_mappings:
+  title: name
+  buyer: publisherName
+  budget: price
+  deadline: acceptanceEndDate
+  published_at: publishDate
+  description: description
+extra:
+  integrator_id: "5bbede70-583c-4b80-9afa-d7622063f607"
+  page_size: 50
